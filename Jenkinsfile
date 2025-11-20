@@ -1,21 +1,19 @@
 pipeline {
-    agent any
+    agent any 
 
-    tools {
-        jdk 'JAVA_HOME', 
-        maven 'M2_HOME'
-    }
-
+    
     stages {
-        stage('GIT') {
+        stage('Test Connexion Git') {
             steps {
-                git branch: 'main',
-                    url: 'https://github.com/ahmed0199/DevOps.git'
+                echo 'Pipeline demarre et code clone.'
+                
+                sh 'uname -a' 
             }
         }
-        stage ('Compile Stage') {
+        
+        stage('Hello World') {
             steps {
-                sh 'mvn clean compile'
+                sh 'echo "CI Pipeline OK - Hello World!"' 
             }
         }
     }
