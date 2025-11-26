@@ -47,20 +47,25 @@ pipeline {
         }
 
         // Étape 4 : Publication (Push) vers Docker Hub
-        stage('Publication Registre') {
-            steps {
-                // Utilise les identifiants stockés dans Jenkins pour l'authentification
-                withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIAL_ID, 
-                                                passwordVariable: 'DOCKER_PASSWORD', 
-                                                usernameVariable: 'DOCKER_USER')]) {
-                    
-                    def fullImageName = "${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}"
-                    
-                    // Commande équivalente à docker login + docker push
-                    sh "docker push ${fullImageName}"
-                    echo "Image publiée sur Docker Hub."
-                }
-            }
-        }
+        // ... Ligne 54
+        stage('Publication Registre') {
+            steps {
+                // Utilise les identifiants stockés dans Jenkins pour l'authentification
+                withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIAL_ID, 
+                                                passwordVariable: 'DOCKER_PASSWORD', 
+                                                usernameVariable: 'DOCKER_USER')]) {
+                    
+                    // AJOUT DU BLOC 'script' pour la logique Groovy
+                    script { 
+                        def fullImageName = "${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}"
+                        
+                        // Commande équivalente à docker login + docker push
+                        sh "docker push ${fullImageName}"
+                        echo "Image publiée sur Docker Hub."
+                    } // FERMETURE DU BLOC 'script'
+                }
+            }
+        }
+// ... }
     }
 }
