@@ -17,7 +17,7 @@ pipeline {
         stage('Récupération du Code') {
             steps {
                 // Récupère les dernières mises à jour du dépôt Git
-                git branch: 'main', url: '' 
+                git branch: 'main', url: 'https://github.com/ahmed0199/DevOps.git' 
                 echo "Code récupéré."
             }
         }
