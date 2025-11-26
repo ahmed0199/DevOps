@@ -1,66 +1,76 @@
 pipeline {
-    agent any // Exécute le pipeline sur n'importe quel agent disponible
+    agent any
 
     environment {
-        // Variables nécessaires pour la construction et le push Docker
-        DOCKER_REGISTRY = 'docker.io'
-        DOCKER_USERNAME = 'ahmedallaya'
-        IMAGE_NAME = "alpine"
-        // Le tag sera la date et l'heure de la construction
-        IMAGE_TAG = sh(returnStdout: true, script: "date +%Y%m%d%H%M%S").trim()
-        // ID de l'identifiant Docker Hub stocké dans Jenkins
-        DOCKER_CREDENTIAL_ID = 'docker-hub-credentials' 
+        REGISTRY = "docker.io"          // Ton registre (ex: Docker Hub)
+        IMAGE_NAME = "ahmedallaya/devops" // Nom de ton image
+        IMAGE_TAG = "latest"            // Tag de l'image
+        DOCKER_CREDENTIALS = 'docker-hub-credentials' // ID des credentials Jenkins
+    }
+
+    triggers {
+        // Le webhook GitHub déclenche déjà, mais on met un fallback
+        pollSCM('* * * * *') // Vérifie chaque minute au cas où
     }
 
     stages {
-        // Étape 1 : Récupération du Code (Checkout)
-        stage('Récupération du Code') {
+
+        stage('Checkout') {
             steps {
-                // Récupère les dernières mises à jour du dépôt Git
-                git branch: 'main', url: 'https://github.com/ahmed0199/DevOps.git' 
-                echo "Code récupéré."
+                echo "Récupération du dépôt Git..."
+                checkout scm
             }
         }
 
-        // Étape 2 : Nettoyage et Reconstruction du Projet
-        stage('Nettoyage & Build Projet') {
+        stage('Clean Workspace') {
             steps {
-                // Exemple pour un projet Maven/Java.
-                // Adaptez ces commandes à votre technologie (npm install, etc.)
-                sh 'mvn clean install'
-                echo "Projet reconstruit et nettoyé."
+                echo "Nettoyage du workspace..."
+                sh 'git clean -fdx'
             }
         }
 
-        // Étape 3 : Construction de l'Image Docker
-        stage('Construction Docker') {
+        stage('Build Project') {
             steps {
-                script {
-                    // Construction de l'image locale avec le tag complet
-                    def fullImageName = "${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}"
+                echo "Reconstruction du projet..."
+                sh ' mvn clean package -DskipTests'
                     
-                    // Commande équivalente à docker build -t <tag_complet> .
-                    sh "docker build -t ${fullImageName} ." 
-                    echo "Image Docker construite: ${fullImageName}"
+                       
+                    
+
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                echo "Construction de l’image Docker..."
+                sh """
+                    docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+                """
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                echo "Connexion & push sur le registre..."
+                withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS,
+                                                 usernameVariable: 'USER',
+                                                 passwordVariable: 'PASS')]) {
+                    sh """
+                        echo "$PASS" | docker login -u "$USER" --password-stdin ${REGISTRY}
+                        docker push ${IMAGE_NAME}:${IMAGE_TAG}
+                        docker logout ${REGISTRY}
+                    """
                 }
             }
         }
+    }
 
-        // Étape 4 : Publication (Push) vers Docker Hub
-        stage('Publication Registre') {
-            steps {
-                // Utilise les identifiants stockés dans Jenkins pour l'authentification
-                withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIAL_ID, 
-                                                passwordVariable: 'DOCKER_PASSWORD', 
-                                                usernameVariable: 'DOCKER_USER')]) {
-                    
-                    def fullImageName = "${DOCKER_REGISTRY}/${DOCKER_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}"
-                    
-                    // Commande équivalente à docker login + docker push
-                    sh "docker push ${fullImageName}"
-                    echo "Image publiée sur Docker Hub."
-                }
-            }
+    post {
+        success {
+            echo "Pipeline terminé avec succès 🎉"
+        }
+        failure {
+            echo "Le pipeline a échoué ❌"
         }
     }
 }
