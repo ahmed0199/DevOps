@@ -43,24 +43,7 @@ pipeline {
             }
         }
 
-        stage('Push Docker Image') {
-            steps {
-                echo "Push Docker Hub..."
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: "${DOCKER_CREDENTIALS}",
-                        usernameVariable: 'DOCKER_USER',
-                        passwordVariable: 'DOCKER_PASS'
-                    )
-                ]) {
-                    sh """
-                        echo "\$DOCKER_PASS" | docker login -u "\$DOCKER_USER" --password-stdin
-                        docker push ${IMAGE_NAME}:${IMAGE_TAG}
-                        docker logout
-                    """
-                }
-            }
-        }
+        
 
         stage('SonarQube Analysis') {
             steps {
