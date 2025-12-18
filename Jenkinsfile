@@ -54,7 +54,7 @@ pipeline {
                         -Dsonar.host.url=http://localhost:9000 \
                         -Dsonar.login=$SONAR_TOKEN
                     """
-                }
+                
             }
         }
 
@@ -76,5 +76,4 @@ pipeline {
             echo "Le pipeline a échoué ❌"
         }
     }
-
-
+}
