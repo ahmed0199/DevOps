@@ -48,7 +48,7 @@ pipeline {
                 echo "Push Docker Hub..."
                 withCredentials([
                     usernamePassword(
-                        credentialsId: DOCKER_CREDENTIALS,
+                        credentialsId: "${DOCKER_CREDENTIALS}",
                         usernameVariable: 'DOCKER_USER',
                         passwordVariable: 'DOCKER_PASS'
                     )
