@@ -6,6 +6,7 @@ pipeline {
         IMAGE_NAME = "ahmedallaya/devops"
         IMAGE_TAG = "latest"
         DOCKER_CREDENTIALS = 'dockerhub'
+        SONAR_TOKEN = credentials('sonarTOK')
         
     }
 
