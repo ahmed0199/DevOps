@@ -5,7 +5,7 @@ pipeline {
         REGISTRY = "docker.io"
         IMAGE_NAME = "ahmedallaya/devops"
         IMAGE_TAG = "latest"
-        DOCKER_CREDENTIALS = 'docker-hub-credentials'
+        DOCKER_CREDENTIALS = 'docker-hub-credentials2'
     }
 
     triggers {
