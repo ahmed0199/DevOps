@@ -64,14 +64,17 @@ pipeline {
                 }
             }
         }
-        stage('SonarQube Analysis') {
+     stage('SonarQube Analysis') {
             steps {
-                sh """
-                    mvn sonar:sonar \
-                      -Dsonar.projectKey=mon-projet \
-                      -Dsonar.host.url=http://localhost:9000 \
-                      -Dsonar.login=${SONAR_TOKEN}
-                """
+                // On utilise withCredentials uniquement ici pour éviter les erreurs globales
+                withCredentials([string(credentialsId: 'sonarTOK', variable: 'SONAR_TOKEN')]) {
+                    sh """
+                        mvn sonar:sonar \
+                          -Dsonar.projectKey=mon-projet \
+                          -Dsonar.host.url=http://localhost:9000 \
+                          -Dsonar.login=${SONAR_TOKEN}
+                    """
+                }
             }
         }
         stage('Deploy to Kubernetes') {
