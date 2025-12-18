@@ -6,7 +6,7 @@ pipeline {
         IMAGE_NAME = "ahmedallaya/devops"
         IMAGE_TAG = "latest"
         DOCKER_CREDENTIALS = 'dockerhub'
-        SONAR_TOKEN = credentials('sonarTOK')
+        SONAR_TOKEN = 'sonarTOK'
         
     }
 
@@ -48,7 +48,6 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withCredentials([string(credentialsId: 'sonarTOK', variable: 'SONAR_TOKEN')]) {
                     sh """
                         mvn sonar:sonar \
                         -Dsonar.projectKey=mon-projet \
