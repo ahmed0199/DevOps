@@ -1,0 +1,74 @@
+# 1. Stockage Persistant
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mysql-pv
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/mnt/data"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc
+  namespace: devops
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+# 2. Deployment MySQL
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+  namespace: devops
+spec:
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:5.7
+        env:
+        - name: MYSQL_DATABASE
+          value: springdb
+        - name: MYSQL_USER
+          value: spring
+        - name: MYSQL_PASSWORD
+          value: spring123
+        - name: MYSQL_ROOT_PASSWORD
+          value: rootpassword
+        ports:
+        - containerPort: 3306
+        volumeMounts:
+        - name: mysql-storage
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql-storage
+        persistentVolumeClaim:
+          claimName: mysql-pvc
+---
+# 3. Service Interne (C'est ce qui définit 'mysql-service')
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-service
+  namespace: devops
+spec:
+  selector:
+    app: mysql
+  ports:
+    - port: 3306
+      targetPort: 3306        
