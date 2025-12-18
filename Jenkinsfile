@@ -2,16 +2,14 @@ pipeline {
     agent any
 
     environment {
-        SONAR_TOKEN = credentials('sonarTOK')
-        REGISTRY = "docker.io"          // Ton registre (ex: Docker Hub)
-        IMAGE_NAME = "ahmedallaya/devops" // Nom de ton image
-        IMAGE_TAG = "latest"            // Tag de l'image
-        DOCKER_CREDENTIALS = 'docker-hub-credentials' // ID des credentials Jenkins
+        REGISTRY = "docker.io"
+        IMAGE_NAME = "ahmedallaya/devops"
+        IMAGE_TAG = "latest"
+        DOCKER_CREDENTIALS = 'docker-hub-credentials'
     }
 
     triggers {
-        // Le webhook GitHub déclenche déjà, mais on met un fallback
-        pollSCM('* * * * *') // Vérifie chaque minute au cas où
+        pollSCM('* * * * *')
     }
 
     stages {
@@ -32,60 +30,56 @@ pipeline {
 
         stage('Build Project') {
             steps {
-                echo "Reconstruction du projet..."
-                sh ' mvn clean package -DskipTests'
-                    
-                       
-                    
-
+                echo "Build Maven..."
+                sh 'mvn clean package -DskipTests'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                echo "Construction de l’image Docker..."
-                sh """
-                    docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
-                """
+                echo "Build image Docker..."
+                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
             }
         }
 
         stage('Push Docker Image') {
             steps {
-                echo "Connexion & push sur le registre..."
-                withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS,
-                                                 usernameVariable: 'USER',
-                                                 passwordVariable: 'PASS')]) {
+                echo "Push Docker Hub..."
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: DOCKER_CREDENTIALS,
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                    )
+                ]) {
                     sh """
-                        echo "$PASS" | docker login -u "$USER" --password-stdin ${REGISTRY}
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
                         docker push ${IMAGE_NAME}:${IMAGE_TAG}
-                        docker logout ${REGISTRY}
+                        docker logout
                     """
                 }
             }
         }
-     stage('SonarQube Analysis') {
+
+        stage('SonarQube Analysis') {
             steps {
-                // On utilise withCredentials uniquement ici pour éviter les erreurs globales
                 withCredentials([string(credentialsId: 'sonarTOK', variable: 'SONAR_TOKEN')]) {
                     sh """
                         mvn sonar:sonar \
-                          -Dsonar.projectKey=mon-projet \
-                          -Dsonar.host.url=http://localhost:9000 \
-                          -Dsonar.login=${SONAR_TOKEN}
+                        -Dsonar.projectKey=mon-projet \
+                        -Dsonar.host.url=http://localhost:9000 \
+                        -Dsonar.login=$SONAR_TOKEN
                     """
                 }
             }
         }
+
         stage('Deploy to Kubernetes') {
             steps {
-                script {
-                    sh """
-                        kubectl apply -f mysql-deployment.yaml
-                        kubectl apply -f spring-deployment.yaml
-     
-                    """
-                }
+                sh """
+                    kubectl apply -f mysql-deployment.yaml
+                    kubectl apply -f spring-deployment.yaml
+                """
             }
         }
     }
