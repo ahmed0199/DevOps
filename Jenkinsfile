@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         REGISTRY = "docker.io"
-        IMAGE_NAME = "ahmedallaya/devops2"
+        IMAGE_NAME = "ahmedallaya/devops"
         IMAGE_TAG = "latest"
         DOCKER_CREDENTIALS = 'dockerhub'
         
