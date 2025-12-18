@@ -2,6 +2,7 @@ pipeline {
     agent any
 
     environment {
+        SONAR_TOKEN = credentials('sonarTOK')
         REGISTRY = "docker.io"          // Ton registre (ex: Docker Hub)
         IMAGE_NAME = "ahmedallaya/devops" // Nom de ton image
         IMAGE_TAG = "latest"            // Tag de l'image
@@ -59,6 +60,27 @@ pipeline {
                         echo "$PASS" | docker login -u "$USER" --password-stdin ${REGISTRY}
                         docker push ${IMAGE_NAME}:${IMAGE_TAG}
                         docker logout ${REGISTRY}
+                    """
+                }
+            }
+        }
+        stage('SonarQube Analysis') {
+            steps {
+                sh """
+                    mvn sonar:sonar \
+                      -Dsonar.projectKey=mon-projet \
+                      -Dsonar.host.url=http://localhost:9000 \
+                      -Dsonar.login=${SONAR_TOKEN}
+                """
+            }
+        }
+        stage('Deploy to Kubernetes') {
+            steps {
+                script {
+                    sh """
+                        kubectl apply -f mysql-deployment.yaml
+                        kubectl apply -f spring-deployment.yaml
+     
                     """
                 }
             }
